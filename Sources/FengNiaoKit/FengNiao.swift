@@ -229,7 +229,14 @@ public struct FengNiao {
             if subPath.isDirectory {
                 result.append(contentsOf: usedStringNames(at: subPath))
             } else {
-                let fileExt = subPath.extension ?? ""
+                // For the case dark-light image
+                var newSubPath = subPath
+                if subPath.contains("-dark") {
+                    newSubPath = newSubPath.replacingOccurrences(of: "-dark", with: "")
+                } else if subPath.contains("-light") {
+                    newSubPath = newSubPath.replacingOccurrences(of: "-light", with: "")
+                }
+                let fileExt = newSubPath.extension ?? ""
                 guard searchInFileExtensions.contains(fileExt) else {
                     continue
                 }
@@ -239,7 +246,7 @@ public struct FengNiao {
                 let searchRules = fileType?.searchRules(extensions: resourceExtensions) ??
                                   [PlainImageSearchRule(extensions: resourceExtensions)]
                 
-                let content = (try? subPath.read()) ?? ""
+                let content = (try? newSubPath.read()) ?? ""
                 result.append(contentsOf: searchRules.flatMap {
                     $0.search(in: content).map { name in
                         let p = Path(name)

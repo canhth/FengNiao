@@ -188,21 +188,35 @@ public struct FengNiao {
             for dir in dirPaths where file.contains(dir) {
                 continue fileLoop
             }
-            
+
             // Skip the folders which suffix with a non-folder extension.
             // eg: We need to skip a folder with such name: /myfolder.png/ (although we should blame the one who named it)
             let filePath = Path(file)
             if let ext = filePath.extension, filePath.isDirectory && nonDirExtensions.contains(ext)  {
                 continue
             }
-            
-            let key = file.plainFileName(extensions: resourceExtensions)
-            if let existing = files[key] {
-                files[key] = existing.union([file])
+            let lastComponent = file.components(separatedBy: "/").last ?? ""
+            // For the case dark-light image 
+            if lastComponent.contains("-dark") {
+                let newFile = file.replacingOccurrences(of: "-dark", with: "")
+                appendFilePath(newFile)
+            } else if lastComponent.contains("-light") {
+                let newFile = file.replacingOccurrences(of: "-light", with: "")
+                appendFilePath(newFile)
             } else {
-                files[key] = [file]
+                appendFilePath(file)
+            }
+            
+            func appendFilePath(_ file: String) { 
+                let key = file.plainFileName(extensions: resourceExtensions)
+                if let existing = files[key] {
+                    files[key] = existing.union([file])
+                } else {
+                    files[key] = [file]
+                }
             }
         }
+
         return files
     }
     
@@ -229,14 +243,8 @@ public struct FengNiao {
             if subPath.isDirectory {
                 result.append(contentsOf: usedStringNames(at: subPath))
             } else {
-                // For the case dark-light image
-                var newSubPath = subPath
-                if subPath.contains("-dark") {
-                    newSubPath = newSubPath.replacingOccurrences(of: "-dark", with: "")
-                } else if subPath.contains("-light") {
-                    newSubPath = newSubPath.replacingOccurrences(of: "-light", with: "")
-                }
-                let fileExt = newSubPath.extension ?? ""
+                
+                let fileExt = subPath.extension ?? ""
                 guard searchInFileExtensions.contains(fileExt) else {
                     continue
                 }
@@ -246,7 +254,7 @@ public struct FengNiao {
                 let searchRules = fileType?.searchRules(extensions: resourceExtensions) ??
                                   [PlainImageSearchRule(extensions: resourceExtensions)]
                 
-                let content = (try? newSubPath.read()) ?? ""
+                let content = (try? subPath.read()) ?? ""
                 result.append(contentsOf: searchRules.flatMap {
                     $0.search(in: content).map { name in
                         let p = Path(name)

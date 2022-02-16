@@ -191,8 +191,9 @@ public struct FengNiao {
 
             // Skip the folders which suffix with a non-folder extension.
             // eg: We need to skip a folder with such name: /myfolder.png/ (although we should blame the one who named it)
+            // also skip for /Assets-Cloud/
             let filePath = Path(file)
-            if let ext = filePath.extension, filePath.isDirectory && nonDirExtensions.contains(ext)  {
+            if let ext = filePath.extension, filePath.isDirectory && nonDirExtensions.contains(ext), filePath.contains("/Assets-Cloud/")  {
                 continue
             }
             let lastComponent = file.components(separatedBy: "/").last ?? ""

@@ -176,7 +176,7 @@ public struct FengNiao {
     func allResourceFiles() -> [String: Set<String>] {
         let find = ExtensionFindProcess(path: projectPath, extensions: resourceExtensions, excluded: excludedPaths)
         guard let result = find?.execute() else {
-            print("Resource finding failed.".red)
+            fengiaoPrint("Resource finding failed.".red)
             return [:]
         }
         
@@ -226,7 +226,7 @@ public struct FengNiao {
     
     func usedStringNames(at path: Path) -> Set<String> {
         guard let subPaths = try? path.children() else {
-            print("Failed to get contents in path: \(path)".red)
+            fengiaoPrint("Failed to get contents in path: \(path)".red)
             return []
         }
         
@@ -310,7 +310,13 @@ extension String {
         case (let p?, let s?):
             return hasPrefix(p) && hasSuffix(s)
         case (let p?, nil):
-            return hasPrefix(p)
+        if p.last == "_" {
+                var binanceAnimatedImage = p
+                binanceAnimatedImage.removeLast()
+                return hasPrefix(binanceAnimatedImage)
+            } else {
+                return hasPrefix(p)
+            }
         case (nil, let s?):
             return hasSuffix(s)
         }

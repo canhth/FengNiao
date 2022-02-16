@@ -90,3 +90,10 @@ class ExtensionFindProcess: NSObject {
         }
     }
 }
+
+public var shouldDisplayLog = false
+public func fengiaoPrint(_ message: String, forced: Bool? = false) {
+    if forced == true || shouldDisplayLog {
+        print(message)
+    }
+}

@@ -63,6 +63,10 @@ let excludePathOption = MultiStringOption(
     helpMessage: "Exclude paths from search.")
 cli.addOption(excludePathOption)
 
+let verboseOption = BoolOption(longFlag: "verbose",
+    helpMessage: "Display log messages in details.")
+cli.addOption(verboseOption)
+
 let resourceExtOption = MultiStringOption(
     shortFlag: "r", longFlag: "resource-extensions",
     helpMessage: "Resource file extensions need to be searched. Default is 'imageset jpg png gif pdf'")
@@ -109,38 +113,39 @@ if versionOption.value {
     exit(EX_OK);
 }
 
-
 let projectPath = projectPathOption.value ?? "."
-let isForce = isForceOption.value
+let isForce = isForceOption.value 
 let excludePaths = excludePathOption.value ?? []
 let resourceExtentions = resourceExtOption.value ?? ["imageset", "jpg", "png", "gif", "pdf"]
 let fileExtensions = fileExtOption.value ?? ["h", "m", "mm", "swift", "xib", "storyboard", "plist"]
+shouldDisplayLog = verboseOption.value == true ? true : false
 
 let fengNiao = FengNiao(projectPath: projectPath,
                         excludedPaths: excludePaths,
                         resourceExtensions: resourceExtentions,
                         searchInFileExtensions: fileExtensions)
 
-let unusedFiles: [FileInfo]
+let unusedFiles: [FileInfo] 
+
 do {
-    print("Searching unused file. This may take a while...")
+    fengiaoPrint("Searching unused file. This may take a while...")
     unusedFiles = try fengNiao.unusedFiles()
 } catch {
     guard let e = error as? FengNiaoError else {
-        print("Unknown Error: \(error)".red.bold)
+        fengiaoPrint("Unknown Error: \(error)".red.bold)
         exit(EX_USAGE)
     }
     switch e {
     case .noResourceExtension:
-        print("You need to specify some resource extensions as search target. Use --resource-extensions to specify.".red.bold)
+        fengiaoPrint("You need to specify some resource extensions as search target. Use --resource-extensions to specify.".red.bold)
     case .noFileExtension:
-        print("You need to specify some file extensions to search in. Use --file-extensions to specify.".red.bold)
+        fengiaoPrint("You need to specify some file extensions to search in. Use --file-extensions to specify.".red.bold)
     }
     exit(EX_USAGE)
 }
 
 if unusedFiles.isEmpty {
-    print("😎 Hu, you have no unused resources in path: \(Path(projectPath).absolute()).".green.bold)
+    fengiaoPrint("😎 Hu, you have no unused resources in path: \(Path(projectPath).absolute()).".green.bold)
     exit(EX_OK)
 }
 
@@ -152,44 +157,46 @@ if !isForce {
     //     }
     //     result = promptResult(files: unusedFiles)
     // }
-    
+    fengiaoPrint("\n")
     switch result {
     case .list:
         for file in unusedFiles.sorted(by: { $0.size > $1.size }) {
-            print("\(file.readableSize) \(file.path.string)")
+            // fengiaoPrint("\(file.readableSize) \(file.path.abbreviate().string)", forced: true)lastComponent
+            let currentPath = Path.current.string
+            fengiaoPrint("\(file.readableSize) \(file.path.string.replacingOccurrences(of: currentPath, with: ""))", forced: true)
         }
         exit(EX_OK)
     case .delete:
         break
     case .ignore:
-        print("Ignored. Nothing to do, bye!".green.bold)
+        fengiaoPrint("Ignored. Nothing to do, bye!".green.bold)
         exit(EX_OK)
     }
 }
 
-print("Deleting unused files...⚙".bold)
+fengiaoPrint("Deleting unused files...⚙".bold)
 
 let (deleted, failed) = FengNiao.delete(unusedFiles)
 guard failed.isEmpty else {
-    print("\(unusedFiles.count - failed.count) unused files are deleted. But we encountered some error while deleting these \(failed.count) files:".yellow.bold)
+    fengiaoPrint("\(unusedFiles.count - failed.count) unused files are deleted. But we encountered some error while deleting these \(failed.count) files:".yellow.bold)
     for (fileInfo, err) in failed {
-        print("\(fileInfo.path.string) - \(err.localizedDescription)")
+        fengiaoPrint("\(fileInfo.path.string) - \(err.localizedDescription)")
     }
     exit(EX_USAGE)
 }
 
 
-print("\(unusedFiles.count) unused files are deleted.".green.bold)
+fengiaoPrint("\(unusedFiles.count) unused files are deleted.".green.bold)
 
 if !skipProjRefereceCleanOption.value {
     if let children = try? Path(projectPath).absolute().children(){
-        print("Now Deleting unused Reference in project.pbxproj...⚙".bold)
+        fengiaoPrint("Now Deleting unused Reference in project.pbxproj...⚙".bold)
         for path in children {
             if path.lastComponent.hasSuffix("xcodeproj"){
                 let pbxproj = path + "project.pbxproj"
                 FengNiao.deleteReference(projectFilePath: pbxproj, deletedFiles: deleted)
             }
         }
-        print("Unused Reference deleted successfully.".green.bold)
+        fengiaoPrint("Unused Reference deleted successfully.".green.bold)
     }
 }

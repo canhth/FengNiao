@@ -13,27 +13,34 @@
 
 ## What
 
-FengNiao is a simple command-line util to deleting unused image resource files from your Xcode project.
+FengNiao is a simple command-line util to delete unused image resource files from your Xcode project.
 
 ## How
 
 ### Install
 
-You need Swift Package Manager (as well as swift compiler) installed in your macOS; generally you are prepared if you have the latest Xcode installed.
+#### Mint
+
+[Mint](https://github.com/yonaskolb/Mint) is a tool that installs and runs Swift command line tool packages. Make sure
+you have Xcode installed, then:
+
+```sh
+> brew install mint
+> mint install onevcat/fengniao
+```
 
 #### Compile from source
 
 ```bash
 > git clone https://github.com/onevcat/FengNiao.git
 > cd FengNiao
-> ./install.sh
+> swift build -c release
+
+# Then copy the executable to your PATH, such as `/usr/local/bin`
+> sudo cp .build/release/FengNiao /usr/local/bin/fengniao
 ```
 
 FengNiao should be compiled, tested and installed into the `/usr/local/bin`.
-
-#### Homebrew
-
-You may want to install in from Homebrew. But for now it is not supported.
 
 ### Usage
 
@@ -60,6 +67,10 @@ FengNiao supports some arguments. You can find it by:
       Resource file extensions need to be searched. Default is 'imageset jpg png gif pdf'
   -f, --file-extensions:
       In which types of files we should search for resource usage. Default is 'm mm swift xib storyboard'
+  --skip-proj-reference:
+      Skip the Project file (.pbxproj) reference cleaning.
+      By skipping it, the project file will be left untouched. 
+      You may want to skip ths step if you are trying to build multiple projects with dependency and keep .pbxproj unchanged while compiling.
   --version:
       Print version.
   -h, --help:
